@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
+    {% if user.username %}
     <h1>Hi, {{ user.username }}</h1>
+    <p><a href="#">logout</a></p>
+    {% else %}
+    <h1>Hi, Anonmous</h1>
+    <p><a href="{{url_for('login')}}">Login</a></p>
+    {% endif %}
     <hr/>
     {% for post in posts %}
     <div>{{ post.author.username }} Say:{{ post.body }} </div>

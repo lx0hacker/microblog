@@ -1,70 +1,58 @@
-# templates
-### 什么是templetas
-> 我们不可能每个函数都去写html，我们需要有一个html，然后我们往这个html里面传入参数，从而构成一个完整的页面。
-
-* 如何做？
-> 新建 templates 文件夹， 因为我们已经在 app/__init__.py 里面使用了 __name__ 属性。所以flask 会自己去寻找 在当前文件夹里面 叫做 templates 的文件夹
-
-### templates文件
+# web 表单
+> 分离原则，将配置文件单独分离出来，以确保后期比较好修改。
+创建config.py
 ```
-cd app
-mkdir templates
-touch base.html
-touch index.html
-```
-### routes.py
-```
-#!/usr/bin/env python
-#-*- coding:utf-8-*-
-
-from app import app
-from flask import render_template
-
-@app.route('/')
-@app.route('/index')
-def index():
-    # mock
-    user = {
-        "username":'johnw',
-    }
-    posts =[{
-        "author": {"username":"johnw"},
-        "body":"Hello world"
-    }]
-    title = 'Home Page'
-    return render_template('index.html',title=title,user=user,posts=posts)
+import os
+class Config(object):
+    SECRET_KEY = 'qwer1234'
 
 ```
-### base.html
-> 首先在我们程序中肯定有某部分是不变的，比如导航栏，比如页面底部。这个时候我们需要引入 jinja2 继承的属性，让其他html继承这个父类的html
+为什么要有secret key？
+这是为了防止CSRF攻击，在每个表单中植入一个随机值，随着客户端发送到服务器端进行解密验证。当然最安全的做法是写在环境变量里面。
+# __init__.py
+在__init__.py里面引入配置。也就是在实例上绑定配置
 ```
-<html>
-    <head>
-        <meta charset='utf-8'>
-        <title>Microblog - {{title}} </title>
-        <link href='xxx.css' rel="stylesheet" />>
-    </head>
-    <body>
-        {% block content %}{% endblock %}
-    </body>
-</html>
-```
-### index.html
-```
-{% extends "base.html" %}
-{% block content %}
-    <h1>Hi, {{ user.username }}</h1>
-    {% for post in posts %}
-    <div><h2>{{ post.author.username }}</h2><p>Say:{{ post.body }}</p></div>
-    {% endfor %}
-{% endblock %}
+...
+app.config.from_object(Config)
+...
 
 ```
+# 开始使用web表单
+* 具体分为三步
+1. 新建对象
+2. ruote引用
+3. 新建html渲染
 
-### jinja2:
+* 注意事项
+1. 每个html表单里面都必须要有csrf token form.hidden_tag()
+2. 如果在表单下面写validate_xxx(表的字段名)。默认会使用这个函数去检验这个字段
+
+* 规划
+1. 登录： 用户名，密码，记住我，登录按钮
+2. 注册： 用户名，密码，密码2，邮箱，注册按钮
+
+# index.html 新增登录入口
 ```
-{% if xxx %} {% else %} {% endif %}
-{% for xxx in xxx %} {% endfor %}
-{{ 变量 }}
+...
+{% if user.username %}
+<h1>Hi, {{ user.username }}</h1>
+<p><a href="#">logout</a></p>
+{% else %}
+<h1>Hi, Anonmous</h1>
+<p><a href="{{url_for('login')}}">Login</a></p>
+{% endif %}
+...
+```
+# forms.py
+```
+from flask_wtf import FlaskForm
+from wtforms import StringField,PasswordField,BooleanField,SubmitField
+from wtforms.validators import DataRequired
+
+class LoginForm(FlaskForm):
+    username = StringField('Username: ',validators=[DataRequired()])
+    password = PasswordField('Password: ',validators=[DataRequired()])
+    remember_me = BooleanField('Remember Me')
+    submit = SubmitField('Submit')
 ```
 
