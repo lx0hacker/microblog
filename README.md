@@ -25,7 +25,7 @@ app.config.from_object(Config)
 
 * 注意事项
 1. 每个html表单里面都必须要有csrf token form.hidden_tag()
-2. 如果在表单下面写validate_xxx(表的字段名)。默认会使用这个函数去检验这个字段
+2. 当运行validate_on_submit()这个方法，就会收集所有的validate_xxx(表的字段名)，执行
 
 * 规划
 1. 登录： 用户名，密码，记住我，登录按钮
