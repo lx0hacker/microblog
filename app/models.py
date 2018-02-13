@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
-from app import app,db
+from app import app,db,login
 from datetime import datetime
+from werkzeug.security import generate_password_hash,check_password_hash
+from flask_login import UserMixin
 '''
 u.posts.all()
 backref执行了一句sql语句
@@ -16,7 +18,11 @@ select ===> 直接返回结果列表
 dynamic ===> 返回一个query对象
 '''
 
-class User(db.Model):
+@login.user_loader
+def load_user(id):
+    return User.query.get(int(id))
+
+class User(UserMixin,db.Model):
     __tablename__ = "user"
     id = db.Column(db.Integer,primary_key = True)
     username = db.Column(db.String(64),unique=True,index=True)
@@ -26,6 +32,11 @@ class User(db.Model):
 
     def __repr__(self):
         return "<User {}>".format(self.username)
+
+    def set_password(self,password):
+        self.password_hash=generate_password_hash(password)
+    def check_password_hash(self,password):
+        return check_password_hash(self.password_hash,password)
 
 class Post(db.Model):
     __tablename__='post'
@@ -40,3 +51,4 @@ class Post(db.Model):
 
     def __repr__(self):
         return "<Post {}>".format(self.title)
+
