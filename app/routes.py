@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #-*- coding:utf-8-*-
 
-from app import app
+from app import app,db
 from flask import render_template,flash,redirect,url_for,request
-from app.forms import LoginForm
+from app.forms import LoginForm,RegisterForm
 from flask_login import current_user,login_user,login_required,logout_user
 from urllib.parse import urlparse
 from app.models import User,Post
@@ -42,4 +42,19 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+@app.route('/register',methods=['GET','POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    form = RegisterForm()
+    if form.validate_on_submit():
+        user = User(username=form.username.data,email=form.email.data)
+        user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('Congratulation! You are now a register user!!!')
+        return redirect(url_for('login'))
+    return render_template('register.html',form=form,title='Register')
 
