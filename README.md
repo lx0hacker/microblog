@@ -1,58 +1,53 @@
-# web 表单
-> 分离原则，将配置文件单独分离出来，以确保后期比较好修改。
-创建config.py
+# Database
+## 安装插件
 ```
-import os
-class Config(object):
-    SECRET_KEY = 'qwer1234'
-
-```
-为什么要有secret key？
-这是为了防止CSRF攻击，在每个表单中植入一个随机值，随着客户端发送到服务器端进行解密验证。当然最安全的做法是写在环境变量里面。
-# __init__.py
-在__init__.py里面引入配置。也就是在实例上绑定配置
-```
-...
-app.config.from_object(Config)
-...
-
-```
-# 开始使用web表单
-* 具体分为三步
-1. 新建对象
-2. ruote引用
-3. 新建html渲染
-
-* 注意事项
-1. 每个html表单里面都必须要有csrf token form.hidden_tag()
-2. 当运行validate_on_submit()这个方法，就会收集所有的validate_xxx(表的字段名)，执行
-
-* 规划
-1. 登录： 用户名，密码，记住我，登录按钮
-2. 注册： 用户名，密码，密码2，邮箱，注册按钮
-
-# index.html 新增登录入口
-```
-...
-{% if user.username %}
-<h1>Hi, {{ user.username }}</h1>
-<p><a href="#">logout</a></p>
-{% else %}
-<h1>Hi, Anonmous</h1>
-<p><a href="{{url_for('login')}}">Login</a></p>
-{% endif %}
-...
-```
-# forms.py
-```
-from flask_wtf import FlaskForm
-from wtforms import StringField,PasswordField,BooleanField,SubmitField
-from wtforms.validators import DataRequired
-
-class LoginForm(FlaskForm):
-    username = StringField('Username: ',validators=[DataRequired()])
-    password = PasswordField('Password: ',validators=[DataRequired()])
-    remember_me = BooleanField('Remember Me')
-    submit = SubmitField('Submit')
+pip install flask-sqlalchemy
+pip install flask-migrate
 ```
 
+## 配置Database
+config.py
+```
+SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://test:qwe123@192.168.232.132'
+SQLALCHEMY_TRACK_MODIFICATIONS=False
+
+```
+init.py
+```
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+db = SQLAlchemy(app)
+migrate = Migrate(app,db)
+
+```
+
+## 创建models
+```
+from app import app,db
+
+class User(db.Model):
+    __tablename__ = "user"
+    id = db.Column(db.Integer,primary_key = True)
+    username = db.Column(db.String(64),unique=True,index=True)
+    email = db.Column(db.String(120),index=True,unique=True)
+    password_hash = db.Column(db.String(128))
+
+    def __repr__(self):
+        return "<User {}>".format(self.username)
+```
+## 数据库的关系
+一对一
+一对多
+多对多
+http://blog.csdn.net/qq_34146899/article/details/52559747 
+http://blog.csdn.net/bestallen/article/details/52601457 
+
+## migrate 过程
+```
+1. flask db init
+2. flask db migrate -m "xxx"
+3. flask db upgrade
+
+如果要回滚数据
+4. flask db downgrade
+```
