@@ -4,6 +4,7 @@
 from . import db,login_manager
 from werkzeug.security import generate_password_hash,check_password_hash
 from flask_login import UserMixin,AnonymousUserMixin
+from datetime import datetime
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -17,8 +18,24 @@ class User(UserMixin,db.Model):
     phone = db.Column(db.String(64),unique=True,index=True)
     password_hash = db.Column(db.String(256))
     introduce = db.Column(db.Text(256))
+    last_seen = db.Column(db.DateTime(),default=datetime.utcnow)
     # 一个对象只有一个role，所以一个对象里面只要保持id就好了
     role_id = db.Column(db.Integer,db.ForeignKey('role.id'))
+
+    def ping(self):
+        self.last_seen = datetime.utcnow()
+        db.session.add(self)
+
+
+    def __init__(self, **kw):
+        super(User, self).__init__(**kw)
+        if self.role is None:
+            if self.email == '403481704@qq.com':
+                self.role = Role.query.filter_by(permissions=0xff).first()
+            if self.role is None:
+                self.role = Role.query.filter_by(default=True).first()
+
+
     def can(self,permissions):
         return self.role is not None and \
                (self.role.permissions & permissions) == permissions
@@ -84,7 +101,7 @@ class Role(db.Model):
 class Permission:
     FOLLOW = 0x01
     COMMENT = 0x02
-    WRITE_ARTICLE = 0x03
+    WRITE_ARTICLE = 0x04
     MODERATE_COMMENTS = 0x08
     ADMINISTER = 0x80
 

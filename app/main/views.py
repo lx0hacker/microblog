@@ -9,3 +9,4 @@ from ..models import User
 @main.route('/')
 def index():
     return render_template('main/index.html',title='index')
+
